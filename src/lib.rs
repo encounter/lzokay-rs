@@ -113,12 +113,13 @@ mod tests {
 
     use super::{compress::compress, decompress::decompress};
 
+    const INPUT: &[u8] = include_bytes!("test1.txt");
+
     #[test]
     fn test_round_trip() {
-        let src = include_bytes!("test1.txt");
-        let compressed = compress(src).expect("Failed to compress");
-        let mut dst = vec![0u8; src.len()];
+        let compressed = compress(INPUT).expect("Failed to compress");
+        let mut dst = vec![0u8; INPUT.len()];
         decompress(&compressed, &mut dst).expect("Failed to decompress");
-        assert_eq!(&src[..], dst.as_slice());
+        assert_eq!(INPUT, dst.as_slice());
     }
 }

@@ -18,6 +18,7 @@ fn main() {
         .size_t_is_usize(true)
         .ctypes_prefix("types")
         .derive_debug(false)
+        .clang_arg("-std=c++14")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks));
     #[cfg(not(feature = "std"))]
     {

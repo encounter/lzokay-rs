@@ -54,11 +54,7 @@
 extern crate alloc;
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
-use alloc::{
-    alloc::{alloc_zeroed, dealloc, Layout},
-    boxed::Box,
-    vec::Vec,
-};
+use alloc::{boxed::Box, vec::Vec};
 #[cfg(feature = "alloc")]
 use core::ptr::null_mut;
 use core::{marker::PhantomData, mem::size_of};
