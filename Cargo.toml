@@ -1,0 +1,24 @@
+[package]
+name = "lzokay"
+version = "1.0.0"
+edition = "2018"
+license = "MIT"
+repository = "https://github.com/encounter/lzokay-rs"
+documentation = "https://docs.rs/lzokay"
+readme = "README.md"
+description = """
+A minimal, MIT-licensed implementation of the LZO compression format.
+"""
+keywords = ["lzo", "compression", "no_std"]
+categories = ["compression", "no-std", "api-bindings"]
+
+[features]
+alloc = []
+std = ["alloc"]
+decompress = []
+compress = []
+default = ["compress", "decompress", "std"]
+
+[build-dependencies]
+bindgen = "0.59.1"
+cc = "1.0.69"
