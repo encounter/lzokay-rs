@@ -11,8 +11,10 @@
 //! use lzokay::compress::*;
 //! # #[allow(non_upper_case_globals)] const input: [u8; 512] = [0u8; 512];
 //!
+//! # #[cfg(feature = "alloc")] {
 //! let dst: Vec<u8> = compress(&input)?;
 //! # assert_eq!(dst.len(), 10);
+//! # }
 //! # Ok::<(), lzokay::Error>(())
 //! ```
 //!
@@ -22,11 +24,13 @@
 //! # #[allow(non_upper_case_globals)] const input1: [u8; 512] = [0u8; 512];
 //! # #[allow(non_upper_case_globals)] const input2: [u8; 512] = [0u8; 512];
 //!
+//! # #[cfg(feature = "alloc")] {
 //! let mut dict = new_dict();
 //! let dst1 = compress_with_dict(&input1, &mut dict)?;
 //! let dst2 = compress_with_dict(&input2, &mut dict)?;
 //! # assert_eq!(dst1.len(), 10);
 //! # assert_eq!(dst2.len(), 10);
+//! # }
 //! # Ok::<(), lzokay::Error>(())
 //! ```
 //!
@@ -55,7 +59,9 @@ use alloc::{
     boxed::Box,
     vec::Vec,
 };
-use core::{marker::PhantomData, mem::size_of, ptr::null_mut};
+#[cfg(feature = "alloc")]
+use core::ptr::null_mut;
+use core::{marker::PhantomData, mem::size_of};
 
 use crate::{bindings, lzokay_result, Error};
 
@@ -98,6 +104,7 @@ pub fn dict_from_storage(storage: &mut [u8]) -> Dict {
     }
     Dict {
         base: bindings::lzokay_DictBase { _storage: storage.as_mut_ptr() as *mut DictStorage },
+        #[cfg(feature = "alloc")]
         storage: Option::None,
         phantom: PhantomData,
     }

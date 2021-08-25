@@ -4,7 +4,12 @@ fn main() {
     println!("cargo:rerun-if-changed=wrapper.h");
     println!("cargo:rerun-if-changed=lzokay/lzokay.cpp");
     println!("cargo:rerun-if-changed=lzokay/lzokay.hpp");
-    cc::Build::new().cpp(true).file("lzokay/lzokay.cpp").compile("lzokay");
+    cc::Build::new()
+        .cpp(true)
+        .file("lzokay/lzokay.cpp")
+        .flag_if_supported("-std=c++14") // GCC/Clang
+        .flag_if_supported("/std:c++14") // MSVC
+        .compile("lzokay");
     #[allow(unused_mut)]
     let mut bindings = bindgen::Builder::default()
         .header("wrapper.hpp")

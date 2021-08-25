@@ -103,20 +103,17 @@ fn lzokay_result<T>(result: T, error: bindings::lzokay_EResult) -> Result<T, Err
 }
 
 #[cfg(test)]
+#[cfg(all(feature = "compress", feature = "decompress", feature = "alloc"))]
 mod tests {
-    #[cfg(all(not(feature = "std"), feature = "alloc"))]
+    #[cfg(not(feature = "std"))]
     extern crate alloc;
 
-    #[cfg(all(not(feature = "std"), feature = "alloc"))]
-    use alloc::vec::Vec;
+    #[cfg(not(feature = "std"))]
+    use alloc::vec;
 
-    #[cfg(all(feature = "compress", feature = "alloc"))]
-    use super::compress::compress;
-    #[cfg(feature = "decompress")]
-    use super::decompress::decompress;
+    use super::{compress::compress, decompress::decompress};
 
     #[test]
-    #[cfg(all(feature = "compress", feature = "decompress", feature = "alloc"))]
     fn test_round_trip() {
         let src = include_bytes!("test1.txt");
         let compressed = compress(src).expect("Failed to compress");
