@@ -1,7 +1,7 @@
 use std::{env, path::PathBuf};
 
 fn main() {
-    println!("cargo:rerun-if-changed=wrapper.h");
+    println!("cargo:rerun-if-changed=wrapper.hpp");
     println!("cargo:rerun-if-changed=lzokay/lzokay.cpp");
     println!("cargo:rerun-if-changed=lzokay/lzokay.hpp");
     cc::Build::new()
