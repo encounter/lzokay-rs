@@ -1,0 +1,8 @@
+[licenses]
+allow = ["MIT"]
+# Exceptions for build-only dependencies
+exceptions = [
+    { allow = ["Apache-2.0"], name = "clang-sys", version = "*" },
+    { allow = ["BSD-3-Clause"], name = "bindgen", version = "*" },
+    { allow = ["ISC"], name = "libloading", version = "*" },
+]
