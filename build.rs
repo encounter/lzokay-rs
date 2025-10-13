@@ -19,7 +19,7 @@ fn main() {
         .ctypes_prefix("types")
         .derive_debug(false)
         .clang_arg("-std=c++14")
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks));
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
     #[cfg(not(feature = "std"))]
     {
         bindings = bindings.layout_tests(false);
