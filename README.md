@@ -6,9 +6,9 @@
 [crates.io]: https://crates.io/crates/lzokay
 [Api Rustdoc]: https://img.shields.io/badge/api-rustdoc-blue.svg
 [rustdoc]: https://docs.rs/lzokay
-[Rust Version]: https://img.shields.io/badge/rust-1.70+-blue.svg?maxAge=3600
+[Rust Version]: https://img.shields.io/badge/rust-1.81+-blue.svg?maxAge=3600
 
-Rust wrapper for [LZ👌](https://github.com/jackoalan/lzokay), a minimal, MIT-licensed implementation of the
+Pure-Rust port of [LZ👌](https://github.com/jackoalan/lzokay), a minimal, MIT-licensed implementation of the
 [LZO compression format](http://www.oberhumer.com/opensource/lzo/).
 
 See the original [README](https://github.com/jackoalan/lzokay/blob/master/README.md) for more information.
@@ -21,29 +21,29 @@ See the original [README](https://github.com/jackoalan/lzokay/blob/master/README
 
 ### Usage
 
-See the [compress](https://docs.rs/lzokay/latest/lzokay/compress) 
-or [decompress](https://docs.rs/lzokay/latest/lzokay/decompress) 
+See the [compress](https://docs.rs/lzokay/latest/lzokay/compress)
+or [decompress](https://docs.rs/lzokay/latest/lzokay/decompress)
 documentation for reference.
 
 In `Cargo.toml`:
 
 ```toml
 [dependencies]
-lzokay = "1.0.1"
+lzokay = "2.0.0"
 ```
 
 Or, to only enable certain features:
 
 ```toml
 [dependencies.lzokay]
-version = "1.0.1"
+version = "2.0.0"
 default-features = false
 features = ["decompress", "compress"]
 ```
 
 - `decompress`: Enables decompression functions.
 - `compress`: Enables compression functions.
-- `alloc`: Enables optional compression functions that perform heap allocation.  
+- `alloc`: Enables optional compression functions that perform heap allocation.
    Without `std`, this uses `extern crate alloc`.
 - `std`: Enables use of `std`. Implies `alloc`.
 
