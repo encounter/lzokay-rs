@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         platform: [ ubuntu-latest, macos-latest, windows-latest ]
-        toolchain: [ stable, 1.70.0, nightly ]
+        toolchain: [ stable, 1.71.0, nightly ]
         features:
             - compress,alloc
             - compress,decompress

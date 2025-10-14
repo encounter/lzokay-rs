@@ -11,7 +11,7 @@ A minimal, MIT-licensed implementation of the LZO compression format.
 """
 keywords = ["lzo", "compression", "no_std"]
 categories = ["compression", "no-std", "api-bindings"]
-rust-version = "1.70.0"
+rust-version = "1.71.0"
 
 [features]
 alloc = []
