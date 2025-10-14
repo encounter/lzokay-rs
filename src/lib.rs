@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 //! # LZ👌-rs
 //!
-//! Rust wrapper for [LZ👌](https://github.com/jackoalan/lzokay), a minimal, MIT-licensed
+//! Pure-Rust port of [LZ👌](https://github.com/jackoalan/lzokay), a minimal, MIT-licensed
 //! implementation of the [LZO compression format](http://www.oberhumer.com/opensource/lzo/).
 //!
 //! See the original [README](https://github.com/jackoalan/lzokay/blob/master/README.md) for more information.
@@ -20,14 +20,14 @@
 //!
 //! ```toml
 //! [dependencies]
-//! lzokay = "1.0.1"
+//! lzokay = "2.0.0"
 //! ```
 //!
 //! Or, to only enable certain features:
 //!
 //! ```toml
 //! [dependencies.lzokay]
-//! version = "1.0.1"
+//! version = "2.0.0"
 //! default-features = false
 //! features = ["decompress", "compress"]
 //! ```
@@ -49,36 +49,8 @@ pub mod compress;
 #[cfg(feature = "decompress")]
 pub mod decompress;
 
-mod bindings {
-    #![allow(unknown_lints)]
-    #![allow(non_upper_case_globals)]
-    #![allow(non_camel_case_types)]
-    #![allow(non_snake_case)]
-    #![allow(deref_nullptr)]
-    #![allow(dead_code)]
-    #[cfg(not(feature = "std"))]
-    mod types {
-        pub type c_uchar = u8;
-        pub type c_ushort = u16;
-        pub type c_uint = u32;
-        pub type c_int = i32;
-        pub type c_ulong = usize;
-        pub type c_ulonglong = usize;
-    }
-    #[cfg(feature = "std")]
-    mod types {
-        pub type c_uchar = ::std::os::raw::c_uchar;
-        pub type c_ushort = ::std::os::raw::c_ushort;
-        pub type c_uint = ::std::os::raw::c_uint;
-        pub type c_int = ::std::os::raw::c_int;
-        pub type c_ulong = usize;
-        pub type c_ulonglong = usize;
-    }
-    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-}
-
 /// Error result codes
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Error {
     /// Likely indicates bad compressed LZO input.
     LookbehindOverrun,
@@ -92,19 +64,19 @@ pub enum Error {
     InputNotConsumed,
 }
 
-fn lzokay_result<T>(result: T, error: bindings::lzokay_EResult) -> Result<T, Error> {
-    if error == bindings::lzokay_EResult_Success {
-        Result::Ok(result)
-    } else {
-        Result::Err(match error {
-            bindings::lzokay_EResult_LookbehindOverrun => Error::LookbehindOverrun,
-            bindings::lzokay_EResult_OutputOverrun => Error::OutputOverrun,
-            bindings::lzokay_EResult_InputOverrun => Error::InputOverrun,
-            bindings::lzokay_EResult_InputNotConsumed => Error::InputNotConsumed,
-            _ => Error::Error,
-        })
+impl core::fmt::Display for Error {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        match self {
+            Error::LookbehindOverrun => write!(f, "lookbehind overrun"),
+            Error::OutputOverrun => write!(f, "output overrun"),
+            Error::InputOverrun => write!(f, "input overrun"),
+            Error::Error => write!(f, "unknown error"),
+            Error::InputNotConsumed => write!(f, "input not consumed"),
+        }
     }
 }
+
+impl core::error::Error for Error {}
 
 #[cfg(test)]
 #[cfg(all(feature = "compress", feature = "decompress", feature = "alloc"))]
@@ -117,13 +89,22 @@ mod tests {
 
     use super::{compress::compress, decompress::decompress};
 
-    const INPUT: &[u8] = include_bytes!("test1.txt");
+    const INPUT1: &[u8] = include_bytes!("test1.txt");
+    const INPUT2: &[u8] = include_bytes!("test2.txt");
 
     #[test]
-    fn test_round_trip() {
-        let compressed = compress(INPUT).expect("Failed to compress");
-        let mut dst = vec![0u8; INPUT.len()];
+    fn test_round_trip1() {
+        let compressed = compress(INPUT1).expect("Failed to compress");
+        let mut dst = vec![0u8; INPUT1.len()];
         decompress(&compressed, &mut dst).expect("Failed to decompress");
-        assert_eq!(INPUT, dst.as_slice());
+        assert_eq!(INPUT1, dst.as_slice());
+    }
+
+    #[test]
+    fn test_round_trip2() {
+        let compressed = compress(INPUT2).expect("Failed to compress");
+        let mut dst = vec![0u8; INPUT2.len()];
+        decompress(&compressed, &mut dst).expect("Failed to decompress");
+        assert_eq!(INPUT2, dst.as_slice());
     }
 }

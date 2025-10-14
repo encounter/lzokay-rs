@@ -1,7 +1,7 @@
 [package]
 name = "lzokay"
-version = "1.0.2"
-edition = "2018"
+version = "2.0.0"
+edition = "2021"
 license = "MIT"
 repository = "https://github.com/encounter/lzokay-rs"
 documentation = "https://docs.rs/lzokay"
@@ -11,7 +11,7 @@ A minimal, MIT-licensed implementation of the LZO compression format.
 """
 keywords = ["lzo", "compression", "no_std"]
 categories = ["compression", "no-std", "api-bindings"]
-rust-version = "1.71.0"
+rust-version = "1.81.0"
 
 [features]
 alloc = []
@@ -19,7 +19,3 @@ std = ["alloc"]
 decompress = []
 compress = []
 default = ["compress", "decompress", "std"]
-
-[build-dependencies]
-bindgen = "0.72.1"
-cc = "1.2.41"
