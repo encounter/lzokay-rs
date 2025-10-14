@@ -54,7 +54,7 @@
 extern crate alloc;
 
 #[cfg(all(feature = "alloc", not(feature = "std")))]
-use alloc::{boxed::Box, vec::Vec};
+use alloc::{boxed::Box, vec, vec::Vec};
 use core::{cmp, mem::size_of};
 #[cfg(all(feature = "alloc", feature = "std"))]
 use std::{boxed::Box, vec, vec::Vec};
