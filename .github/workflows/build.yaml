@@ -20,7 +20,7 @@ jobs:
         uses: KyleMayes/install-llvm-action@v2
         if: matrix.platform == 'windows-latest'
         with:
-          version: 21.1.2
+          version: 20.1.8
           directory: ${{ runner.temp }}/llvm
       - name: Set LIBCLANG_PATH
         run: echo "LIBCLANG_PATH=$((gcm clang).source -replace "clang.exe")" >> $env:GITHUB_ENV
