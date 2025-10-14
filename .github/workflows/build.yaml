@@ -10,29 +10,19 @@ jobs:
         platform: [ ubuntu-latest, macos-latest, windows-latest ]
         toolchain: [ stable, 1.81.0, nightly ]
         features:
-            - compress,alloc
-            - compress,decompress
-            - compress,decompress,std
+          - compress,alloc
+          - compress,decompress
+          - compress,decompress,std
       fail-fast: false
     runs-on: ${{ matrix.platform }}
     steps:
-      - name: Install LLVM and Clang # required for bindgen to work, see https://github.com/rust-lang/rust-bindgen/issues/1797
-        uses: KyleMayes/install-llvm-action@v2.0.8
-        if: matrix.platform == 'windows-latest'
-        with:
-          version: 21.1.3
-          directory: ${{ runner.temp }}/llvm
-      - name: Set LIBCLANG_PATH
-        run: echo "LIBCLANG_PATH=$((gcm clang).source -replace "clang.exe")" >> $env:GITHUB_ENV
-        if: matrix.platform == 'windows-latest'
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
         with:
           submodules: recursive
-      - uses: actions-rs/toolchain@v1
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.toolchain }}
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --release --no-default-features --features ${{ matrix.features }}
+      - name: Cargo test
+        run: cargo test --release --no-default-features --features ${{ matrix.features }}
