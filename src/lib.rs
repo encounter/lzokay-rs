@@ -63,6 +63,7 @@ mod bindings {
         pub type c_uint = u32;
         pub type c_int = i32;
         pub type c_ulong = usize;
+        pub type c_ulonglong = usize;
     }
     #[cfg(feature = "std")]
     mod types {
@@ -71,6 +72,7 @@ mod bindings {
         pub type c_uint = ::std::os::raw::c_uint;
         pub type c_int = ::std::os::raw::c_int;
         pub type c_ulong = usize;
+        pub type c_ulonglong = usize;
     }
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
