@@ -6,7 +6,7 @@
 [crates.io]: https://crates.io/crates/lzokay
 [Api Rustdoc]: https://img.shields.io/badge/api-rustdoc-blue.svg
 [rustdoc]: https://docs.rs/lzokay
-[Rust Version]: https://img.shields.io/badge/rust-1.46+-blue.svg?maxAge=3600
+[Rust Version]: https://img.shields.io/badge/rust-1.70+-blue.svg?maxAge=3600
 
 Rust wrapper for [LZ👌](https://github.com/jackoalan/lzokay), a minimal, MIT-licensed implementation of the
 [LZO compression format](http://www.oberhumer.com/opensource/lzo/).

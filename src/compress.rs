@@ -84,9 +84,7 @@ pub fn new_dict() -> Dict<'static> {
 }
 
 /// Dictionary storage size, for manual or stack allocation.
-pub const fn dict_storage_size() -> usize {
-    size_of::<DictStorage>()
-}
+pub const fn dict_storage_size() -> usize { size_of::<DictStorage>() }
 
 /// Creates a dictionary from the supplied storage.
 ///
@@ -109,17 +107,13 @@ pub fn dict_from_storage(storage: &mut [u8]) -> Dict<'_> {
 }
 
 /// Worst-case compression size.
-pub const fn compress_worst_size(s: usize) -> usize {
-    s + s / 16 + 64 + 3
-}
+pub const fn compress_worst_size(s: usize) -> usize { s + s / 16 + 64 + 3 }
 
 /// Compress the supplied buffer into a heap-allocated vector.
 ///
 /// Creates a new dictionary for each invocation.
 #[cfg(feature = "alloc")]
-pub fn compress(src: &[u8]) -> Result<Vec<u8>, Error> {
-    compress_with_dict(src, &mut new_dict())
-}
+pub fn compress(src: &[u8]) -> Result<Vec<u8>, Error> { compress_with_dict(src, &mut new_dict()) }
 
 /// Compress the supplied buffer into a heap-allocated vector,
 /// with the supplied pre-allocated dictionary.
