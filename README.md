@@ -29,14 +29,14 @@ In `Cargo.toml`:
 
 ```toml
 [dependencies]
-lzokay = "2.0.0"
+lzokay = "2.0"
 ```
 
 Or, to only enable certain features:
 
 ```toml
 [dependencies.lzokay]
-version = "2.0.0"
+version = "2.0"
 default-features = false
 features = ["decompress", "compress"]
 ```
