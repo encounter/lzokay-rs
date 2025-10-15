@@ -25,7 +25,7 @@
 //! # #[allow(non_upper_case_globals)] const input2: [u8; 512] = [0u8; 512];
 //!
 //! # #[cfg(feature = "alloc")] {
-//! let mut dict = new_dict();
+//! let mut dict = Dict::new();
 //! let dst1 = compress_with_dict(&input1, &mut dict)?;
 //! let dst2 = compress_with_dict(&input2, &mut dict)?;
 //! # assert_eq!(dst1.len(), 10);
@@ -41,11 +41,10 @@
 //!
 //! // Allocate dst on stack, with worst-case compression size
 //! let mut dst = [0u8; compress_worst_size(input.len())];
-//! // Allocate dictionary storage on stack
-//! let mut storage = DictStorage::new();
-//! // Create dictionary from storage
-//! let mut dict = dict_from_storage(&mut storage);
-//! let size = compress_no_alloc(&input, &mut dst, &mut dict)?;
+//! // Allocate dictionary storage (real applications should use thread_local or Mutex)
+//! static mut DICT: Dict = Dict::new_const();
+//! # #[allow(static_mut_refs)]
+//! let size = compress_no_alloc(&input, &mut dst, unsafe { &mut DICT })?;
 //! # assert_eq!(size, 10);
 //! # Ok::<(), lzokay::Error>(())
 //! ```
@@ -55,16 +54,18 @@ extern crate alloc;
 
 #[cfg(all(feature = "alloc", not(feature = "std")))]
 use alloc::{boxed::Box, vec, vec::Vec};
-use core::{cmp, mem::size_of};
+use core::cmp;
 #[cfg(all(feature = "alloc", feature = "std"))]
 use std::{boxed::Box, vec, vec::Vec};
+
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::Error;
 
 #[cfg(feature = "alloc")]
 /// Compress `src` into a freshly allocated `Vec<u8>` using a temporary dictionary.
 pub fn compress(src: &[u8]) -> Result<Vec<u8>, Error> {
-    let mut dict = new_dict();
+    let mut dict = Dict::new();
     compress_with_dict(src, &mut dict)
 }
 
@@ -83,8 +84,7 @@ pub const fn compress_worst_size(s: usize) -> usize { s + s / 16 + 64 + 3 }
 
 /// Compress without heap allocations, writing the output into `dst`.
 pub fn compress_no_alloc(src: &[u8], dst: &mut [u8], dict: &mut Dict) -> Result<usize, Error> {
-    let storage = dict.storage_mut();
-    compress_impl(src, dst, storage)
+    compress_impl(src, dst, dict)
 }
 
 const HASH_SIZE: usize = 0x4000;
@@ -92,7 +92,7 @@ const MAX_DIST: usize = 0xBFFF;
 const MAX_MATCH_LEN: usize = 0x800;
 const BUF_SIZE: usize = MAX_DIST + MAX_MATCH_LEN;
 const MAX_MATCH_TABLE: usize = 34;
-const BUF_GUARD: usize = BUF_SIZE + MAX_MATCH_LEN;
+const BUF_GUARD: usize = BUF_SIZE + MAX_MATCH_LEN + 1 /* alignment */;
 
 const M1_MAX_OFFSET: u32 = 0x0400;
 const M2_MAX_OFFSET: u32 = 0x0800;
@@ -109,7 +109,7 @@ const M4_MARKER: u8 = 0x10;
 
 /// Hash chains tracking recent 3-byte sequences, keeping per-key chains and
 /// remembering the best match length at each node.
-#[derive(Clone)]
+#[derive(Clone, FromBytes, IntoBytes, KnownLayout, Immutable)]
 struct Match3 {
     head: [u16; HASH_SIZE],
     chain_sz: [u16; HASH_SIZE],
@@ -118,15 +118,6 @@ struct Match3 {
 }
 
 impl Match3 {
-    const fn new() -> Self {
-        Self {
-            head: [0; HASH_SIZE],
-            chain_sz: [0; HASH_SIZE],
-            chain: [0; BUF_SIZE],
-            best_len: [0; BUF_SIZE],
-        }
-    }
-
     #[inline]
     fn make_key(bytes: &[u8]) -> usize {
         let a = bytes[0] as u32;
@@ -179,14 +170,12 @@ impl Match3 {
 }
 
 /// Direct lookup table for 2-byte prefixes used to seed matches quickly.
-#[derive(Clone)]
+#[derive(Clone, FromBytes, IntoBytes, KnownLayout, Immutable)]
 struct Match2 {
     head: [u16; 1 << 16],
 }
 
 impl Match2 {
-    const fn new() -> Self { Self { head: [u16::MAX; 1 << 16] } }
-
     #[inline]
     fn make_key(bytes: &[u8]) -> usize { (bytes[0] as usize) ^ ((bytes[1] as usize) << 8) }
 
@@ -232,16 +221,31 @@ impl Match2 {
 /// Concrete storage backing a dictionary instance. Buffers and match tables are
 /// stored side by side so the encoder can share logic across heap and stack
 /// configurations.
-#[derive(Clone)]
-pub struct DictStorage {
+#[derive(Clone, FromBytes, IntoBytes, KnownLayout, Immutable)]
+pub struct Dict {
     match3: Match3,
     match2: Match2,
     buffer: [u8; BUF_GUARD],
 }
 
-impl DictStorage {
-    pub const fn new() -> Self {
-        Self { match3: Match3::new(), match2: Match2::new(), buffer: [0; BUF_GUARD] }
+impl Dict {
+    #[cfg(feature = "alloc")]
+    pub fn new() -> Box<Self> {
+        use zerocopy::FromZeros;
+        Self::new_box_zeroed().unwrap()
+    }
+
+    pub const fn new_const() -> Self {
+        Self {
+            match3: Match3 {
+                head: [0; HASH_SIZE],
+                chain_sz: [0; HASH_SIZE],
+                chain: [0; BUF_SIZE],
+                best_len: [0; BUF_SIZE],
+            },
+            match2: Match2 { head: [0; 1 << 16] },
+            buffer: [0; BUF_GUARD],
+        }
     }
 
     /// Initialize dictionary tables and preload the first window from `state.src`.
@@ -444,44 +448,6 @@ impl<'a> State<'a> {
     }
 }
 
-/// Internal representation for dictionaries, either borrowed or owned.
-enum DictInner<'a> {
-    Borrowed(&'a mut DictStorage),
-    #[cfg(feature = "alloc")]
-    Owned(Box<DictStorage>),
-}
-
-/// Compression dictionary used to retain the sliding window between calls.
-pub struct Dict<'a> {
-    inner: DictInner<'a>,
-}
-
-impl<'a> Dict<'a> {
-    /// Return the mutable storage backing this dictionary, regardless of
-    /// whether it is owned or borrowed.
-    fn storage_mut(&mut self) -> &mut DictStorage {
-        match &mut self.inner {
-            DictInner::Borrowed(storage) => storage,
-            #[cfg(feature = "alloc")]
-            DictInner::Owned(storage) => storage.as_mut(),
-        }
-    }
-}
-
-#[cfg(feature = "alloc")]
-/// Create a heap-allocated dictionary with the canonical storage layout.
-pub fn new_dict() -> Dict<'static> {
-    Dict { inner: DictInner::Owned(Box::new(DictStorage::new())) }
-}
-
-/// Total number of bytes required to back a dictionary.
-pub const fn dict_storage_size() -> usize { size_of::<DictStorage>() }
-
-/// Wrap user-provided storage (e.g. stack-allocated) inside a dictionary.
-pub fn dict_from_storage(storage: &mut DictStorage) -> Dict<'_> {
-    Dict { inner: DictInner::Borrowed(storage) }
-}
-
 /// Emit the repeated zero-byte encoding used for long literal/match lengths.
 fn write_zero_byte_length(
     dst: &mut [u8],
@@ -606,7 +572,7 @@ fn find_better_match(best_off: &[u32; MAX_MATCH_TABLE], lb_len: &mut u32, lb_off
 /// Core compression routine shared by the heap-allocating and stack variants.
 /// Maintains the window management and opcode selection heuristics required by
 /// the LZO format while using safe Rust semantics.
-fn compress_impl(src: &[u8], dst: &mut [u8], storage: &mut DictStorage) -> Result<usize, Error> {
+fn compress_impl(src: &[u8], dst: &mut [u8], storage: &mut Dict) -> Result<usize, Error> {
     let mut state = State::new(src);
     storage.init(&mut state);
 
@@ -680,8 +646,8 @@ fn write_dst(dst: &mut [u8], out_pos: &mut usize, slice: &[u8]) -> Result<(), Er
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]
-    use super::{compress, compress_with_dict, new_dict};
-    use super::{compress_no_alloc, compress_worst_size, dict_from_storage, DictStorage};
+    use super::{compress, compress_with_dict};
+    use super::{compress_no_alloc, compress_worst_size, Dict};
 
     const INPUT_1: &[u8] = include_bytes!("test1.txt");
     const EXPECTED_1: &[u8] = include_bytes!("test1.bin");
@@ -698,23 +664,23 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test_compress_with_dict() {
-        let mut dict = new_dict();
+        let mut dict = Dict::new();
         let dst = compress_with_dict(INPUT_1, &mut dict).expect("Failed to compress (1)");
         assert_eq!(dst, EXPECTED_1);
         let dst = compress_with_dict(INPUT_2, &mut dict).expect("Failed to compress (2)");
         assert_eq!(dst, EXPECTED_2);
     }
 
+    static mut DICT: Dict = Dict::new_const();
+
     #[test]
     fn test_compress_no_alloc() {
         let mut dst = [0u8; compress_worst_size(INPUT_1.len())];
-        let mut storage = DictStorage::new();
-        let mut dict = dict_from_storage(&mut storage);
-        let out_size =
-            compress_no_alloc(INPUT_1, &mut dst, &mut dict).expect("Failed to compress (1)");
+        #[allow(static_mut_refs)]
+        let dict = unsafe { &mut DICT };
+        let out_size = compress_no_alloc(INPUT_1, &mut dst, dict).expect("Failed to compress (1)");
         assert_eq!(&dst[0..out_size], EXPECTED_1);
-        let out_size =
-            compress_no_alloc(INPUT_2, &mut dst, &mut dict).expect("Failed to compress (2)");
+        let out_size = compress_no_alloc(INPUT_2, &mut dst, dict).expect("Failed to compress (2)");
         assert_eq!(&dst[0..out_size], EXPECTED_2);
     }
 }
