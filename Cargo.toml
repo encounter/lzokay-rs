@@ -14,8 +14,11 @@ categories = ["compression", "no-std", "api-bindings"]
 rust-version = "1.81.0"
 
 [features]
-alloc = []
-std = ["alloc"]
+alloc = ["zerocopy/alloc"]
+std = ["alloc", "zerocopy/std"]
 decompress = []
 compress = []
 default = ["compress", "decompress", "std"]
+
+[dependencies]
+zerocopy = { version = "0.8.27", default-features = false, features = ["derive"] }
