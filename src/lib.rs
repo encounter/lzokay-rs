@@ -20,14 +20,14 @@
 //!
 //! ```toml
 //! [dependencies]
-//! lzokay = "2.0.0"
+//! lzokay = "2.0.1"
 //! ```
 //!
 //! Or, to only enable certain features:
 //!
 //! ```toml
 //! [dependencies.lzokay]
-//! version = "2.0.0"
+//! version = "2.0.1"
 //! default-features = false
 //! features = ["decompress", "compress"]
 //! ```
