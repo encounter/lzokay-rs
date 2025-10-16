@@ -42,21 +42,23 @@ pub fn decompress(src: &[u8], dst: &mut [u8]) -> Result<usize, Error> {
     let mut lblen: usize;
     let mut lbcur: usize;
 
-    let first = input_byte(src, &mut inp)?;
+    let mut inst = input_byte(src, &mut inp)?;
     // The LZO bitstream reserves the first byte for literal priming. Codes >= 22
     // copy a literal block immediately; 18..21 seed the literal countdown (`state`).
-    if first >= 22 {
-        let len = (first as usize) - 17;
+    if inst >= 22 {
+        let len = (inst as usize) - 17;
         copy_slice(src, &mut inp, dst, &mut outp, len)?;
         state = 4;
-    } else if first >= 18 {
-        nstate = (first as usize) - 17;
+    } else if inst >= 18 {
+        nstate = (inst as usize) - 17;
         state = nstate;
         copy_slice(src, &mut inp, dst, &mut outp, nstate)?;
     }
 
     loop {
-        let inst = input_byte(src, &mut inp)?;
+        if inp > 1 || state > 0 {
+            inst = input_byte(src, &mut inp)?;
+        }
         if inst & 0xC0 != 0 {
             // [M2]
             // 1 L L D D D S S  (128..255)
