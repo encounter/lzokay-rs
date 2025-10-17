@@ -44,6 +44,10 @@ jobs:
             platform: linux
             archs: i686
             target: i686-unknown-linux-gnu
+          - os: ubuntu-24.04-arm
+            platform: linux
+            archs: aarch64
+            target: aarch64-unknown-linux-gnu
           - os: macos-latest
             platform: macos
             archs: universal2
@@ -56,7 +60,7 @@ jobs:
             platform: windows
             archs: x86
             target: i686-pc-windows-msvc
-          - os: windows-latest
+          - os: windows-11-arm
             platform: windows
             archs: ARM64
             target: aarch64-pc-windows-msvc

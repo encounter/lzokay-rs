@@ -27,4 +27,4 @@ default = ["compress", "decompress", "std"]
 
 [dependencies]
 zerocopy = { version = "0.8.27", default-features = false, features = ["derive"] }
-pyo3 = { version = "0.26.0", features = ["abi3-py310"], optional = true }
+pyo3 = { version = "0.26.0", features = ["extension-module", "abi3-py310", "generate-import-lib"], optional = true }
