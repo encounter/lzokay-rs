@@ -68,15 +68,22 @@ pub enum Error {
     InputNotConsumed,
 }
 
+impl Error {
+    /// Returns the error message as a string slice.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Error::LookbehindOverrun => "lookbehind overrun",
+            Error::OutputOverrun => "output overrun",
+            Error::InputOverrun => "input overrun",
+            Error::Error => "unknown error",
+            Error::InputNotConsumed => "input not consumed",
+        }
+    }
+}
+
 impl core::fmt::Display for Error {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        match self {
-            Error::LookbehindOverrun => write!(f, "lookbehind overrun"),
-            Error::OutputOverrun => write!(f, "output overrun"),
-            Error::InputOverrun => write!(f, "input overrun"),
-            Error::Error => write!(f, "unknown error"),
-            Error::InputNotConsumed => write!(f, "input not consumed"),
-        }
+        write!(f, "{}", self.as_str())
     }
 }
 

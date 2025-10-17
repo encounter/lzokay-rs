@@ -15,11 +15,11 @@ pyo3::create_exception!(lzokay, InputNotConsumedError, LzokayError, "Decompressi
 // Helper function to convert lzokay::Error to appropriate Python exception
 fn lzokay_error_to_pyerr(error: Error) -> PyErr {
     match error {
-        Error::LookbehindOverrun => LookbehindOverrunError::new_err("lookbehind overrun"),
-        Error::OutputOverrun => OutputOverrunError::new_err("output overrun"),
-        Error::InputOverrun => InputOverrunError::new_err("input overrun"),
-        Error::Error => LzokayUnknownError::new_err("unknown error"),
-        Error::InputNotConsumed => InputNotConsumedError::new_err("input not consumed"),
+        Error::LookbehindOverrun => LookbehindOverrunError::new_err(error.as_str()),
+        Error::OutputOverrun => OutputOverrunError::new_err(error.as_str()),
+        Error::InputOverrun => InputOverrunError::new_err(error.as_str()),
+        Error::Error => LzokayUnknownError::new_err(error.as_str()),
+        Error::InputNotConsumed => InputNotConsumedError::new_err(error.as_str()),
     }
 }
 
@@ -36,8 +36,7 @@ fn py_decompress(data: &[u8], buffer_size: usize) -> PyResult<Vec<u8>> {
 /// Compress data using LZO compression.
 #[pyfunction(name="compress")]
 fn py_compress(data: &[u8]) -> PyResult<Vec<u8>> {
-    let ret = compress::compress(data).map_err(lzokay_error_to_pyerr)?;
-    Ok(ret)
+    compress::compress(data).map_err(lzokay_error_to_pyerr)
 }
 
 /// Returns the worst-case size for LZO compression of data of given length.

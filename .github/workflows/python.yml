@@ -64,6 +64,7 @@ jobs:
     name: Build ${{ matrix.only }}
     needs: generate-wheels-matrix
     strategy:
+      fail-fast: false
       matrix:
         include: ${{ fromJson(needs.generate-wheels-matrix.outputs.include) }}
     runs-on: ${{ matrix.os }}
