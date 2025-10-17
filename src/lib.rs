@@ -125,8 +125,7 @@ mod tests {
 use pyo3::prelude::*;
 
 #[cfg(feature = "python")]
-#[pymodule]
+#[pymodule(gil_used = false)]
 fn lzokay(m: &Bound<'_, PyModule>) -> PyResult<()> {
     python::lzokay(m)
 }
-

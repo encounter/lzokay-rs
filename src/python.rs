@@ -62,7 +62,6 @@ fn py_compress_worst_size(length: usize) -> PyResult<usize> {
     Ok(compress::compress_worst_size(length))
 }
 
-#[pymodule(gil_used = false)]
 pub fn lzokay(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_decompress, m)?)?;
     m.add_function(wrap_pyfunction!(py_compress, m)?)?;
