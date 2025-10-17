@@ -84,7 +84,7 @@ jobs:
           output-dir: dist
         env:
           CIBW_TEST_EXTRAS: test
-          CIBW_TEST_COMMAND: pytest {project}/tests
+          CIBW_TEST_COMMAND: pytest {project}/python_test
           MACOSX_DEPLOYMENT_TARGET: '10.12'
           
       - name: codecov
