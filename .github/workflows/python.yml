@@ -1,0 +1,120 @@
+name: Python Package
+
+on:
+  push:
+    branches:
+     - main
+    tags:
+      - '*'
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  generate-wheels-matrix:
+    name: Generate wheels matrix
+    runs-on: ubuntu-latest
+    outputs:
+      include: ${{ steps.set-matrix.outputs.include }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install cibuildwheel
+        run: pipx install cibuildwheel==3.2.1
+      - id: set-matrix
+        run: |
+          MATRIX=$(
+            {
+              cibuildwheel --print-build-identifiers --platform linux \
+              | jq -nRc '{"only": inputs, "os": "ubuntu-latest"}' \
+              && cibuildwheel --print-build-identifiers --platform macos \
+              | jq -nRc '{"only": inputs, "os": "macos-latest"}' \
+              && cibuildwheel --print-build-identifiers --platform windows \
+              | jq -nRc '{"only": inputs, "os": "windows-latest"}'
+            } | jq -sc
+          )
+          echo "include=$MATRIX" >> $GITHUB_OUTPUT
+    env:
+      CIBW_BUILD: 'cp310-*'
+      CIBW_ARCHS_LINUX: x86_64
+      CIBW_ARCHS_MACOS: universal2
+      CIBW_ARCHS_WINDOWS: AMD64
+      CIBW_SKIP: pp* *musllinux* cp*t-*
+      MACOSX_DEPLOYMENT_TARGET: '10.12'
+
+  build-sdist:
+    name: sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          submodules: 'recursive'
+
+      - name: Build sdist
+        run: pipx run build --sdist
+
+      - name: Store the packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-source
+          path: dist
+
+  build-wheels:
+    name: Build ${{ matrix.only }}
+    needs: generate-wheels-matrix
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.generate-wheels-matrix.outputs.include) }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          submodules: 'recursive'
+  
+      - name: Add x86_64-apple-darwin
+        run: rustup target add x86_64-apple-darwin
+        if: matrix.os == 'macos-latest'
+
+      - uses: pypa/cibuildwheel@v3.2.1
+        with:
+          only: ${{ matrix.only }}
+          output-dir: dist
+        env:
+          CIBW_TEST_EXTRAS: test
+          CIBW_TEST_COMMAND: pytest {project}/tests
+          MACOSX_DEPLOYMENT_TARGET: '10.12'
+          
+      - name: codecov
+        uses: codecov/codecov-action@v5
+  
+      - name: Store the packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-${{ matrix.only }}
+          path: dist
+
+  pypi:
+    runs-on: 'ubuntu-latest'
+    needs:
+      - build-sdist
+      - build-wheels
+
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v5
+        with:
+          pattern: python-package-*
+          merge-multiple: true
+          path: dist/
+
+      - name: Publish 📦 to TestPyPI
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+      
+      - name: Publish 📦 to PyPI
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        uses: pypa/gh-action-pypi-publish@release/v1

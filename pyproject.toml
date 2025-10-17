@@ -1,0 +1,71 @@
+[build-system]
+requires = ["maturin>=1.9,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "lzokay"
+description = "Python bindings for LZ👌, a LZO compression/decompression algorithm."
+authors = [{name = "Henrique Gemignani"}]
+license = "MIT"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+requires-python = ">=3.10"
+dependencies = []
+dynamic = ["version"]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.urls]
+Homepage = "https://github.com/henriquegemignani/py-lzokay"
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+filterwarnings = [
+    "error",
+]
+xfail_strict = true
+testpaths = [
+    "python_test",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W", "C90", "I", "UP", "C4",
+    "RSE",
+    "TCH",
+    "PTH",
+    "COM818", "COM819",
+    "ISC",
+    "PIE",
+
+    "PLC",
+    "PLE",
+    "PLR",
+    "PLW",
+]
+
+[tool.maturin]
+features = ["python"]
+
+# Include stub files in the package and declare typing support
+include = ["*.pyi", "py.typed"]
+
+# Configure abi3 target for Python 3.10+
+python-versions = ">=3.10"

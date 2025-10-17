@@ -13,12 +13,18 @@ keywords = ["lzo", "compression", "no_std"]
 categories = ["compression", "no-std", "api-bindings"]
 rust-version = "1.81.0"
 
+[lib]
+name = "lzokay"
+crate-type = ["cdylib"]
+
 [features]
 alloc = ["zerocopy/alloc"]
 std = ["alloc", "zerocopy/std"]
 decompress = []
 compress = []
+python = ["pyo3/extension-module", "compress", "decompress", "std"]
 default = ["compress", "decompress", "std"]
 
 [dependencies]
 zerocopy = { version = "0.8.27", default-features = false, features = ["derive"] }
+pyo3 = { version = "0.26.0", features = ["abi3-py310"], optional = true }

@@ -49,6 +49,10 @@ pub mod compress;
 #[cfg(feature = "decompress")]
 pub mod decompress;
 
+// Python bindings module
+#[cfg(feature = "python")]
+mod python;
+
 /// Error result codes
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Error {
@@ -108,3 +112,14 @@ mod tests {
         assert_eq!(INPUT2, dst.as_slice());
     }
 }
+
+// Export Python module when python feature is enabled
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+
+#[cfg(feature = "python")]
+#[pymodule]
+fn lzokay(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    python::lzokay(m)
+}
+
