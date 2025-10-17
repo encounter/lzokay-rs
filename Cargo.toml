@@ -13,10 +13,6 @@ keywords = ["lzo", "compression", "no_std"]
 categories = ["compression", "no-std", "api-bindings"]
 rust-version = "1.81.0"
 
-[lib]
-name = "lzokay"
-crate-type = ["lib", "cdylib"]
-
 [features]
 alloc = ["zerocopy/alloc"]
 std = ["alloc", "zerocopy/std"]

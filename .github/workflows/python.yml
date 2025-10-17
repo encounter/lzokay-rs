@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   wheels:
-    name: Build wheels (${{ matrix.platform }} - ${{ matrix.target }})
+    name: Build wheels (${{ matrix.platform }}, ${{ matrix.target }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -75,6 +75,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
+          architecture: ${{ matrix.target }}
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -82,10 +83,10 @@ jobs:
           args: --release --out dist
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: ${{ matrix.manylinux || 'auto' }}
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.13t
-          architecture: ${{ matrix.target }}
+      # - uses: actions/setup-python@v5
+      #   with:
+      #     python-version: 3.13t
+      #     architecture: ${{ matrix.target }}
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -97,6 +98,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.platform }}-${{ matrix.target }}
+          path: dist
 
   sdist:
     name: Build sdist
