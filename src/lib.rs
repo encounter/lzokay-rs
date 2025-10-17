@@ -49,6 +49,10 @@ pub mod compress;
 #[cfg(feature = "decompress")]
 pub mod decompress;
 
+// Python bindings module
+#[cfg(feature = "python")]
+mod python;
+
 /// Error result codes
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Error {
@@ -64,15 +68,22 @@ pub enum Error {
     InputNotConsumed,
 }
 
+impl Error {
+    /// Returns the error message as a string slice.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Error::LookbehindOverrun => "lookbehind overrun",
+            Error::OutputOverrun => "output overrun",
+            Error::InputOverrun => "input overrun",
+            Error::Error => "unknown error",
+            Error::InputNotConsumed => "input not consumed",
+        }
+    }
+}
+
 impl core::fmt::Display for Error {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        match self {
-            Error::LookbehindOverrun => write!(f, "lookbehind overrun"),
-            Error::OutputOverrun => write!(f, "output overrun"),
-            Error::InputOverrun => write!(f, "input overrun"),
-            Error::Error => write!(f, "unknown error"),
-            Error::InputNotConsumed => write!(f, "input not consumed"),
-        }
+        write!(f, "{}", self.as_str())
     }
 }
 
@@ -107,4 +118,14 @@ mod tests {
         decompress(&compressed, &mut dst).expect("Failed to decompress");
         assert_eq!(INPUT2, dst.as_slice());
     }
+}
+
+// Export Python module when python feature is enabled
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+
+#[cfg(feature = "python")]
+#[pymodule(gil_used = false)]
+fn lzokay(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    python::lzokay(m)
 }

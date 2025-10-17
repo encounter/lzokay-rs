@@ -1,0 +1,67 @@
+[build-system]
+requires = ["maturin>=1.9,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "lzokay"
+description = "Python bindings for LZ👌, a LZO compression/decompression algorithm."
+authors = [
+    { name = "Luke Street", email = "luke@street.dev" },
+    { name = "Henrique Gemignani", email = "henrique@gemignani.org" },
+]
+license = "MIT"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Programming Language :: Rust",
+]
+requires-python = ">=3.10"
+dependencies = []
+dynamic = ["version"]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.urls]
+Homepage = "https://github.com/encounter/lzokay-rs"
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+filterwarnings = [
+    "error",
+]
+xfail_strict = true
+testpaths = [
+    "python/tests",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W", "C90", "I", "UP", "C4",
+    "RSE",
+    "TCH",
+    "PTH",
+    "COM818", "COM819",
+    "ISC",
+    "PIE",
+
+    "PLC",
+    "PLE",
+    "PLR",
+    "PLW",
+]
+
+[tool.maturin]
+features = ["python"]
+
+# Matches pyo3 features in Cargo.toml
+python-versions = ">=3.10"
