@@ -69,7 +69,7 @@ pub enum Error {
 }
 
 impl Error {
-    /// Returns the error message as a string slice.
+    /// Returns the error message as a string.
     pub const fn as_str(self) -> &'static str {
         match self {
             Error::LookbehindOverrun => "lookbehind overrun",
@@ -82,9 +82,7 @@ impl Error {
 }
 
 impl core::fmt::Display for Error {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result { f.write_str(self.as_str()) }
 }
 
 impl core::error::Error for Error {}
@@ -126,6 +124,4 @@ use pyo3::prelude::*;
 
 #[cfg(feature = "python")]
 #[pymodule(gil_used = false)]
-fn lzokay(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    python::lzokay(m)
-}
+fn lzokay(m: &Bound<'_, PyModule>) -> PyResult<()> { python::lzokay(m) }
