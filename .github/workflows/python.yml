@@ -74,8 +74,10 @@ jobs:
             target: aarch64
             python_arch: arm64
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup Python
+        uses: actions/setup-python@v6
         if: matrix.python_arch
         with:
           architecture: ${{ matrix.python_arch }}
@@ -87,7 +89,8 @@ jobs:
           args: --release --out dist ${{ matrix.args }}
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: ${{ matrix.manylinux || 'auto' }}
-      - uses: actions/setup-python@v5
+      - name: Setup Python (free-threaded)
+        uses: actions/setup-python@v6
         if: matrix.python_arch
         with:
           architecture: ${{ matrix.python_arch }}
@@ -111,7 +114,8 @@ jobs:
     name: Build sdist
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v5
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
@@ -120,27 +124,66 @@ jobs:
       - name: Upload sdist
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-sdist
+          name: sdist
           path: dist
+
+  test:
+    name: Test wheels (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: [wheels]
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-22.04-arm
+          - macos-latest
+          - macos-15-intel
+          - windows-latest
+          - windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          # Windows ARM support only available for 3.11+
+          python-version: "3.11"
+      - name: Download wheels
+        uses: actions/download-artifact@v5
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+      - name: Run tests
+        shell: bash
+        run: |
+          pip install lzokay --no-index --find-links dist --force-reinstall
+          pip install pytest
+          pytest
 
   release:
     name: Release
     runs-on: ubuntu-latest
     if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
-    needs: [wheels, sdist]
+    needs: [wheels, sdist, test]
     permissions:
       id-token: write
       contents: write
       attestations: write
     steps:
-      - uses: actions/download-artifact@v4
-      - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v2
+      - name: Download wheels
+        uses: actions/download-artifact@v5
         with:
-          subject-path: "wheels-*/*"
+          path: dist
+          merge-multiple: true
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: dist/*
       - name: Publish to PyPI
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         uses: PyO3/maturin-action@v1
         with:
           command: upload
-          args: --non-interactive --skip-existing wheels-*/*
+          args: --non-interactive --skip-existing dist/*
