@@ -5,16 +5,15 @@ build-backend = "maturin"
 [project]
 name = "lzokay"
 description = "Python bindings for LZ👌, a LZO compression/decompression algorithm."
-authors = [{name = "Henrique Gemignani"}]
+authors = [
+    { name = "Luke Street", email = "luke@street.dev" },
+    { name = "Henrique Gemignani", email = "henrique@gemignani.org" },
+]
 license = "MIT"
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Rust",
 ]
 requires-python = ">=3.10"
 dependencies = []
@@ -25,7 +24,7 @@ file = "README.md"
 content-type = "text/markdown"
 
 [project.urls]
-Homepage = "https://github.com/henriquegemignani/py-lzokay"
+Homepage = "https://github.com/encounter/lzokay-rs"
 
 [project.optional-dependencies]
 test = [
@@ -39,7 +38,7 @@ filterwarnings = [
 ]
 xfail_strict = true
 testpaths = [
-    "python_test",
+    "python/tests",
 ]
 
 [tool.ruff]
@@ -64,8 +63,5 @@ select = [
 [tool.maturin]
 features = ["python"]
 
-# Include stub files in the package and declare typing support
-include = ["*.pyi", "py.typed"]
-
-# Configure abi3 target for Python 3.10+
+# Matches pyo3 features in Cargo.toml
 python-versions = ">=3.10"

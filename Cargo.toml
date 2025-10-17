@@ -15,7 +15,7 @@ rust-version = "1.81.0"
 
 [lib]
 name = "lzokay"
-crate-type = ["cdylib"]
+crate-type = ["lib", "cdylib"]
 
 [features]
 alloc = ["zerocopy/alloc"]
